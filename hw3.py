@@ -3,9 +3,9 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import SocketServer
 import cgi
 import numpy as np
-from pandas import DataFrame
 
-d = {"metric":[], "value":[], "time":[]}
+a = []
+b = []
 
 class S(BaseHTTPRequestHandler):
     def _set_headers(self):
@@ -13,22 +13,18 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/json')
         self.end_headers()
 
-    def genJSON(self,df,name):
-        c = df[df["metric"] == name]
-        a = c["value"]
-        na = np.array(a)
-        b = c["time"].values.tolist()
-        return '{"count":' + str(len(a)) + ',"timeRange": {"start":' + str(b[0]) + ',"end":' + str(b[len(b)-1]) + '},"maxValue":' + str(max(a)) + ',"minValue":' +  str(min(a)) + ',"averageValue":' + str(np.mean(na)) + ',"99thPercentile":' + str(np.percentile(na,99)) + '}'
-
     def do_GET(self):
         self._set_headers()
         print self.path
         if (self.path == '/hello') :
             self.wfile.write('{"message":"Hello World!"}')
-        elif (self.path == '/stats') :
-            global d
-            df = DataFrame(d)
-            self.wfile.write('{"cpu":' + self.genJSON(df,"cpu") + ',"memory":' + self.genJSON(df,"memory") + ',"disk:"' + self.genJSON(df,"disk") + '}')
+        elif (self.path.startswith('/stats')) :
+            ps = self.path.split('=&')
+            for s in ps:
+                print s
+            global a
+            na = np.array(a)
+            self.wfile.write('{"count":' + str(len(a)) + ',"timeRange": {"start":' + str(b[0]) + ',"end":' + str(b[len(b)-1]) + '},"maxValue":' + str(max(a)) + ',"minValue":' +  str(min(a)) + ',"averageValue":' + str(np.mean(na)) + ',"99thPercentile":' + str(np.percentile(na,99)) + '}')
 
     def do_HEAD(self):
         self._set_headers()
@@ -44,17 +40,18 @@ class S(BaseHTTPRequestHandler):
                      'CONTENT_TYPE':'text/plain',
                      })
         st = form.value.split('\n')
-        global d
-        d["metric"] = []
-        d["value"] = []
-        d["time"] = []
+        global a
+        global b
+        a = []
+        b = []
         for item in st:
             if len(item) == 0 :
                 continue
             vs = item.split(' ')
-            d["metric"].append(vs[0])
-            d["value"].append(float(vs[1]))
-            d["time"].append(int(vs[2]))
+            a.append(float(vs[0]))
+            b.append(int(vs[1]))
+        print a
+        print b
 
 def run(server_class=HTTPServer, handler_class=S, port=8080):
     server_address = ('', port)

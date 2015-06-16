@@ -25,10 +25,11 @@ class S(BaseHTTPRequestHandler):
         print self.path
         if (self.path == '/hello') :
             self.wfile.write('{"message":"Hello World!"}')
-        elif (self.path == '/stats') :
+        elif (self.path.startswith('/stats')) :
             global d
             df = DataFrame(d)
-            self.wfile.write('{"cpu":' + self.genJSON(df,"cpu") + ',"memory":' + self.genJSON(df,"memory") + ',"disk:"' + self.genJSON(df,"disk") + '}')
+            name = self.path.split('/')[2]
+            self.wfile.write(self.genJSON(df,name))
 
     def do_HEAD(self):
         self._set_headers()
@@ -36,7 +37,6 @@ class S(BaseHTTPRequestHandler):
     def do_POST(self):
         self._set_headers()
         rf = self.rfile
-        print type(rf)
         form = cgi.FieldStorage(
             fp=self.rfile,
             headers=self.headers,

@@ -18,17 +18,18 @@ class S(BaseHTTPRequestHandler):
         a = c["value"]
         na = np.array(a)
         b = c["time"].values.tolist()
-        return '{"count":' + str(len(a)) + ',"timeRange": {"start":' + str(b[0]) + ',"end":' + str(b[len(b)-1]) + '},"maxValue":' + str(max(a)) + ',"minValue":' +  str(min(a)) + ',"averageValue":' + str(np.mean(na)) + ',"99thPercentile":' + str(np.percentile(na,99)) + '}'
+        return '{"count":' + str(len(a)) + ',"timeRange": {"start":' + str(b[0]) + ',"end":' + str(b[len(b)-1]) + '},"maxValue":' + str(max(a)) + ',"minValue":' +  str(min(a)) + ',"averageValue":' + str(np.mean(na)) + ',"standardDeviation":' + str(np.std(na)) + ',"25thPercentile":' + str(np.percentile(na,25))  + ',"50thPercentile":' + str(np.percentile(na,50))  + ',"75thPercentile":' + str(np.percentile(na,75)) + ',"99thPercentile":' + str(np.percentile(na,99)) + '}'
 
     def do_GET(self):
         self._set_headers()
         print self.path
         if (self.path == '/hello') :
             self.wfile.write('{"message":"Hello World!"}')
-        elif (self.path == '/stats') :
+        elif (self.path.startswith('/stats')) :
             global d
             df = DataFrame(d)
-            self.wfile.write('{"cpu":' + self.genJSON(df,"cpu") + ',"memory":' + self.genJSON(df,"memory") + ',"disk:"' + self.genJSON(df,"disk") + '}')
+            name = self.path.split('/')[2]
+            self.wfile.write(self.genJSON(df,name))
 
     def do_HEAD(self):
         self._set_headers()
@@ -36,7 +37,6 @@ class S(BaseHTTPRequestHandler):
     def do_POST(self):
         self._set_headers()
         rf = self.rfile
-        print type(rf)
         form = cgi.FieldStorage(
             fp=self.rfile,
             headers=self.headers,
