@@ -28,6 +28,7 @@ class S(BaseHTTPRequestHandler):
         elif (self.path == '/stats') :
             global d
             df = DataFrame(d)
+            df[!duplicated(df[c("metric", "time")]),]
             self.wfile.write('{"cpu":' + self.genJSON(df,"cpu") + ',"memory":' + self.genJSON(df,"memory") + ',"disk:"' + self.genJSON(df,"disk") + '}')
 
     def do_HEAD(self):
