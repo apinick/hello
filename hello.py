@@ -1,22 +1,11 @@
 #!/usr/bin/env python
-"""
-Very simple HTTP server in python.
-
-Usage::
-    ./dummy-web-server.py [<port>]
-
-Send a GET request::
-    curl http://localhost
-
-Send a HEAD request::
-    curl -I http://localhost
-
-Send a POST request::
-    curl -d "foo=bar&bin=baz" http://localhost
-
-"""
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import SocketServer
+import cgi
+import numpy as np
+
+a = []
+b = []
 
 class S(BaseHTTPRequestHandler):
     def _set_headers(self):
@@ -26,16 +15,40 @@ class S(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self._set_headers()
-        self.path = '/hello'
-        self.wfile.write('{"message":"Hello World!"}')
+        print self.path
+        if (self.path == '/hello') :
+            self.wfile.write('{"message":"Hello World!"}')
+        elif (self.path == '/stats') :
+            global a
+            na = np.array(a)
+            self.wfile.write('{"count":' + str(len(a)) + '"timeRange": {"start":' + str(b[0]) + ',"end":' + str(b[len(b)-1]) + '},"maxValue":' + str(max(a)) + ',"minValue":' +  str(min(a)) + ',"averageValue":' + str(np.mean(na)) + ',"99thPercentile":' + str(np.percentile(na,99)) + '}')
 
     def do_HEAD(self):
         self._set_headers()
 
     def do_POST(self):
-        # Doesn't do anything with posted data
         self._set_headers()
-        self.wfile.write("<html><body><h1>POST!</h1></body></html>")
+        rf = self.rfile
+        print type(rf)
+        form = cgi.FieldStorage(
+            fp=self.rfile,
+            headers=self.headers,
+            environ={'REQUEST_METHOD':'POST',
+                     'CONTENT_TYPE':'text/plain',
+                     })
+        st = form.value.split('\n')
+        global a
+        global b
+        a = []
+        b = []
+        for item in st:
+            if len(item) == 0 :
+                continue
+            vs = item.split(' ')
+            a.append(float(vs[0]))
+            b.append(int(vs[1]))
+        print a
+        print b
 
 def run(server_class=HTTPServer, handler_class=S, port=8080):
     server_address = ('', port)
